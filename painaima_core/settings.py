@@ -17,8 +17,8 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load environment variables
-load_dotenv(BASE_DIR / ".env")
+# Load environment variables with override=True
+load_dotenv(BASE_DIR / ".env", override=True)
 
 # Quick-start development settings - unsuitable for production
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-3f1stmamu_hr=nlb%j+ur-&ppzz7c&om0s6nyhrru3v$vo(8qh")
@@ -186,8 +186,8 @@ SOCIALACCOUNT_PROVIDERS = {
             "prompt": "select_account",
         },
         "APP": {
-            "client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
-            "secret": os.getenv("GOOGLE_CLIENT_SECRET", ""),
+            "client_id": os.getenv("GOOGLE_CLIENT_ID", "").strip(),
+            "secret": os.getenv("GOOGLE_CLIENT_SECRET", "").strip(),
             "key": ""
         }
     }
