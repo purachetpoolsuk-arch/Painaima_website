@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     "django.contrib.sites",
 
     # Third-party apps
+    "cloudinary_storage",
+    "cloudinary",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
@@ -164,9 +166,22 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 WHITENOISE_USE_FINDERS = True
 
+# Cloudinary Media Storage Configuration
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": os.getenv("CLOUDINARY_CLOUD_NAME", ""),
+    "API_KEY": os.getenv("CLOUDINARY_API_KEY", ""),
+    "API_SECRET": os.getenv("CLOUDINARY_API_SECRET", ""),
+}
+
+# Dynamic Media & Static Storages
+if os.getenv("CLOUDINARY_CLOUD_NAME"):
+    media_storage_backend = "cloudinary_storage.storage.MediaCloudinaryStorage"
+else:
+    media_storage_backend = "django.core.files.storage.FileSystemStorage"
+
 STORAGES = {
     "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": media_storage_backend,
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
