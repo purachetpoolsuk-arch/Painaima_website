@@ -1,0 +1,284 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="th" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}ไปไหนมา (Painaima) - แชร์เรื่องราวและสถานที่โดนใจ{% endblock %}</title>
+  <meta name="description" content="พื้นที่แบ่งปันภาพถ่าย สถานที่ท่องเที่ยว คาเฟ่ ไลฟ์สไตล์ และเรื่องราวประทับใจ">
+  
+  <!-- Favicon & Fonts -->
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Desktop Sidebar & Mobile Header/Nav -->
+    {% include 'components/navbar.html' %}
+
+    <!-- Main Content Area -->
+    <main class="main-wrapper">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <!-- Followers / Following Connections Modal -->
+  <div id="connections-modal" class="modal-backdrop" onclick="if(event.target===this) closeConnectionsModal();">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="connections-modal-title" class="modal-title">ผู้ติดตาม</h3>
+        <button type="button" class="modal-close-btn" onclick="closeConnectionsModal()" title="ปิด">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div id="connections-modal-list" style="padding: 8px 0; max-height: 380px; overflow-y: auto;">
+        <!-- Dynamic content -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Share Post & Story Modal -->
+  <div id="share-modal" class="modal-backdrop" onclick="if(event.target===this) closeShareModal();">
+    <div class="modal-content" style="max-width: 400px; padding: 0;">
+      <div class="modal-header">
+        <h3 class="modal-title">แชร์โพสต์</h3>
+        <button type="button" class="modal-close-btn" onclick="closeShareModal()" title="ปิด">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div style="padding: 16px; display: flex; flex-direction: column; gap: 10px;">
+        
+        <!-- Share to Story Button -->
+        <button type="button" class="btn btn-secondary btn-md" id="btn-share-to-story" style="justify-content: flex-start; padding: 14px 16px; gap: 14px; border-radius: var(--radius-lg); background: linear-gradient(135deg, rgba(244,63,94,0.1), rgba(139,92,246,0.1)); border: 1px solid rgba(244,63,94,0.25);">
+          <div style="width: 40px; height: 40px; border-radius: var(--radius-full); background: var(--accent-gradient); display: flex; align-items: center; justify-content: center; color: #fff;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="16"></line>
+              <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+          </div>
+          <div style="text-align: left;">
+            <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-primary);">แชร์ลงสตอรี่ของคุณ ✨</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">ให้เพื่อนๆ เห็นเรื่องราวนี้ในแถบสตอรี่ 24 ชม.</div>
+          </div>
+        </button>
+
+        <!-- Copy Link Button -->
+        <button type="button" class="btn btn-secondary btn-md" id="btn-copy-link" style="justify-content: flex-start; padding: 14px 16px; gap: 14px; border-radius: var(--radius-lg);">
+          <div style="width: 40px; height: 40px; border-radius: var(--radius-full); background: var(--bg-surface); display: flex; align-items: center; justify-content: center; color: var(--accent-cyan); border: 1px solid var(--border-subtle);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+          </div>
+          <div style="text-align: left;">
+            <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-primary);">คัดลอกลิงก์โพสต์</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">คัดลอก URL เพื่อส่งต่อให้เพื่อน</div>
+          </div>
+        </button>
+
+        <!-- Share via Apps Button -->
+        <button type="button" class="btn btn-secondary btn-md" id="btn-share-apps" style="justify-content: flex-start; padding: 14px 16px; gap: 14px; border-radius: var(--radius-lg);">
+          <div style="width: 40px; height: 40px; border-radius: var(--radius-full); background: var(--bg-surface); display: flex; align-items: center; justify-content: center; color: var(--accent-indigo); border: 1px solid var(--border-subtle);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+          </div>
+          <div style="text-align: left;">
+            <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-primary);">แชร์ไปยังแอปอื่น</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">LINE, Facebook, Twitter และอื่นๆ</div>
+          </div>
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Story Modal (Upload Image or Video) -->
+  <div id="create-story-modal" class="modal-backdrop" onclick="if(event.target===this) closeCreateStoryModal();" style="z-index: 250;">
+    <div class="modal-content" style="max-width: 480px; padding: 0;">
+      <div class="modal-header">
+        <h3 class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.2rem;">✨</span>
+          <span>สร้างสตอรี่ใหม่ (Create Story)</span>
+        </h3>
+        <button type="button" class="modal-close-btn" onclick="closeCreateStoryModal()" title="ปิด">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <form id="create-story-form" method="POST" action="{% url 'posts:story_create' %}" enctype="multipart/form-data" style="padding: 20px;">
+        {% csrf_token %}
+
+        <!-- Dropzone for Image/Video -->
+        <div id="story-dropzone" class="dropzone-container" style="padding: 28px 16px; margin-bottom: 16px;">
+          <div id="story-dropzone-prompt">
+            <div style="width: 48px; height: 48px; border-radius: var(--radius-full); background: rgba(244,63,94,0.1); color: var(--accent-primary); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+              </svg>
+            </div>
+            <p style="font-weight: 700; font-size: 0.95rem; margin-bottom: 2px;">เลือกรูปภาพ หรือ วิดีโอสตอรี่</p>
+            <p style="font-size: 0.78rem; color: var(--text-muted);">รองรับไฟล์ JPG, PNG, WEBP, MP4, WEBM, MOV</p>
+          </div>
+
+          <!-- Previews -->
+          <img id="story-preview-img" style="max-height: 280px; margin: 0 auto; border-radius: var(--radius-md); object-fit: contain; display: none;" alt="Preview">
+          <video id="story-preview-video" style="max-height: 280px; max-width: 100%; margin: 0 auto; border-radius: var(--radius-md); display: none;" controls playsinline></video>
+
+          <input type="file" id="story-file-input" name="media_file" accept="image/*,video/*" required style="display: none;">
+        </div>
+
+        <!-- Caption -->
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label class="form-label" for="story-caption-input">ข้อความสตอรี่ (ไม่บังคับ)</label>
+          <input type="text" id="story-caption-input" name="caption" class="form-input" placeholder="พิมพ์ข้อความที่ต้องการแสดงบนสตอรี่...">
+        </div>
+
+        <!-- Submit Button -->
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn btn-secondary btn-md" onclick="closeCreateStoryModal()">ยกเลิก</button>
+          <button type="submit" id="story-submit-btn" class="btn btn-primary btn-md">
+            <span>แชร์ลงสตอรี่</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Story Viewer Fullscreen Modal (Video, Images, Likes, Comments + Seamless Next/Prev Arrows) -->
+  <div id="story-viewer-modal" class="modal-backdrop" onclick="if(event.target===this) closeStoryViewer();" style="z-index: 300;">
+    
+    <!-- Main Story Container -->
+    <div style="position: relative; max-width: 440px; width: 100%; height: 90vh; max-height: 740px; background: #000; border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; box-shadow: var(--shadow-lg);">
+      
+      <!-- Multi-segment Story Progress Bar -->
+      <div id="story-progress-container" style="position: absolute; top: 12px; left: 12px; right: 12px; height: 3px; display: flex; gap: 4px; z-index: 30;">
+        <!-- Filled dynamically -->
+      </div>
+
+      <!-- Story Top Header -->
+      <div style="position: absolute; top: 22px; left: 16px; right: 16px; display: flex; align-items: center; justify-content: space-between; z-index: 30;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <img id="story-user-avatar" src="" class="avatar-sm" style="border: 2px solid #fff; width: 34px; height: 34px;" alt="User">
+          <div>
+            <div id="story-user-name" style="font-weight: 700; font-size: 0.88rem; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.8);"></div>
+            <div id="story-time" style="font-size: 0.72rem; color: rgba(255,255,255,0.8);"></div>
+          </div>
+        </div>
+        <!-- Centered Close Button (X) -->
+        <button type="button" onclick="closeStoryViewer()" title="ปิด" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: 32px; height: 32px; border-radius: var(--radius-full); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s ease;" onmouseover="this.style.background='rgba(0,0,0,0.8)'" onmouseout="this.style.background='rgba(0,0,0,0.5)'">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Floating Hearts Canvas Container -->
+      <div id="floating-hearts-container" style="position: absolute; inset: 0; pointer-events: none; z-index: 25; overflow: hidden;"></div>
+
+      <!-- Story Media Container (Image or Video) -->
+      <div id="story-media-container" style="flex: 1; display: flex; align-items: center; justify-content: center; position: relative; background: #000;" ondblclick="triggerStoryLike()">
+        <img id="story-image" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;" alt="Story Image">
+        <video id="story-video" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;" playsinline autoplay muted></video>
+        
+        <!-- Navigation Buttons (< and >) on left and right -->
+        <button type="button" id="story-prev-btn" onclick="event.stopPropagation(); goToPrevStory();" title="สตอรี่ก่อนหน้า" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 38px; height: 38px; border-radius: var(--radius-full); background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.25); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s ease; z-index: 25;" onmouseover="this.style.background='rgba(0,0,0,0.85)'; this.style.transform='translateY(-50%) scale(1.1)'" onmouseout="this.style.background='rgba(0,0,0,0.5)'; this.style.transform='translateY(-50%) scale(1)'">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+
+        <button type="button" id="story-next-btn" onclick="event.stopPropagation(); goToNextStory();" title="สตอรี่ถัดไป" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 38px; height: 38px; border-radius: var(--radius-full); background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.25); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s ease; z-index: 25;" onmouseover="this.style.background='rgba(0,0,0,0.85)'; this.style.transform='translateY(-50%) scale(1.1)'" onmouseout="this.style.background='rgba(0,0,0,0.5)'; this.style.transform='translateY(-50%) scale(1)'">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+
+        <!-- Story Bottom Caption Overlay -->
+        <div id="story-caption-box" style="position: absolute; bottom: 64px; left: 0; right: 0; padding: 24px 18px 10px 18px; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%); color: #fff; z-index: 20;">
+          <p id="story-caption-text" style="font-size: 0.92rem; font-weight: 500; text-shadow: 0 1px 4px rgba(0,0,0,0.8);"></p>
+          <a id="story-post-link" href="#" style="display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 0.82rem; color: var(--accent-cyan); font-weight: 700; background: rgba(0,0,0,0.5); padding: 4px 10px; border-radius: var(--radius-full); border: 1px solid rgba(255,255,255,0.2);">
+            <span>ดูโพสต์ต้นฉบับ &rarr;</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Story Bottom Interactive Bar: Send Message / Reply + Heart Like Button -->
+      <div style="height: 64px; background: rgba(18, 22, 31, 0.95); backdrop-filter: blur(12px); border-top: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; padding: 0 16px; gap: 12px; z-index: 30;">
+        
+        <!-- Reply Input Form -->
+        <form id="story-reply-form" onsubmit="submitStoryReply(event)" style="flex: 1; display: flex; align-items: center; background: rgba(255,255,255,0.1); border-radius: var(--radius-full); padding: 6px 14px; border: 1px solid rgba(255,255,255,0.15);">
+          <input type="text" id="story-reply-input" placeholder="ส่งข้อความตอบกลับ..." style="flex: 1; background: transparent; border: none; color: #fff; font-size: 0.88rem; outline: none;" autocomplete="off">
+          <button type="submit" style="background: none; border: none; color: var(--accent-cyan); cursor: pointer; display: flex; align-items: center; padding: 2px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </form>
+
+        <!-- Story Like Heart Button -->
+        <button type="button" id="story-like-btn" onclick="triggerStoryLike()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); width: 42px; height: 42px; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; color: #fff; cursor: pointer; transition: transform 0.15s ease;">
+          <svg id="story-like-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+
+  <style>
+    @keyframes storyProgressAnim {
+      from { width: 0%; }
+      to { width: 100%; }
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(0) scale(0.8); opacity: 1; }
+      100% { transform: translateY(-260px) scale(1.6); opacity: 0; }
+    }
+  </style>
+
+  <!-- Global Toast Notifications -->
+  <div id="toast-container" class="toast-container">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="toast">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <span>{{ message }}</span>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <!-- JavaScript -->
+  <script src="{% static 'js/app.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

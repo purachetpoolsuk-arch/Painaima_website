@@ -1,0 +1,266 @@
+{% load static %}
+{% load socialaccount %}
+<!DOCTYPE html>
+<html lang="th" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>สมัครสมาชิก - ไปไหนมา (Painaima)</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <style>
+    .strength-meter-box {
+      margin-top: 8px;
+    }
+    .strength-bar-bg {
+      width: 100%;
+      height: 6px;
+      background: var(--bg-surface);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .strength-bar-fill {
+      height: 100%;
+      width: 0%;
+      transition: all 0.3s ease;
+      border-radius: var(--radius-full);
+    }
+    .req-list {
+      list-style: none;
+      padding: 0;
+      margin: 8px 0 0 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      font-size: 0.78rem;
+    }
+    .req-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+      transition: color 0.2s ease;
+    }
+    .req-item.valid {
+      color: #10b981;
+    }
+    .req-item.valid svg {
+      stroke: #10b981;
+    }
+  </style>
+</head>
+<body class="auth-wrapper">
+
+  <div class="auth-card" style="max-width: 480px;">
+    
+    <div class="auth-header">
+      <div class="brand-icon" style="margin: 0 auto; width: 48px; height: 48px;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+      </div>
+      <h1 class="auth-title">สมัครสมาชิก</h1>
+      <p class="auth-subtitle">สร้างบัญชีผู้ใช้เพื่อแชร์ไลฟ์สไตล์กับชุมชน Painaima</p>
+    </div>
+
+    <!-- Google OAuth Login Button -->
+    <a href="{% provider_login_url 'google' %}" class="btn-google">
+      <svg width="20" height="20" viewBox="0 0 24 24">
+        <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/>
+        <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5.1 3.7-8.8z"/>
+        <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3 0-.8.1-1.6.4-2.3L1.9 7.3C.7 9.7 0 12 0 12s.7 2.3 1.9 4.7l3.7-2.9z"/>
+        <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16c1.8 3.7 5.6 6.3 10.1 6.3z"/>
+      </svg>
+      <span>สมัครด้วยบัญชี Google</span>
+    </a>
+
+    <div class="auth-divider">หรือกรอกข้อมูลสมัคร</div>
+
+    <!-- Standard Signup Form -->
+    <form method="POST" action="{% url 'account_signup' %}" id="signup-form">
+      {% csrf_token %}
+      
+      {% if form.non_field_errors %}
+        <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; padding: 10px 14px; border-radius: var(--radius-md); font-size: 0.85rem; margin-bottom: 16px;">
+          {% for error in form.non_field_errors %}
+            <div>{{ error }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="form-group">
+        <label class="form-label">ชื่อผู้ใช้ (Username) *</label>
+        <input type="text" name="username" class="form-input" placeholder="ตั้งชื่อผู้ใช้ เช่น john_travel" required autofocus value="{{ form.username.value|default:'' }}">
+        {% if form.username.errors %}
+          <div style="color: #ef4444; font-size: 0.82rem; margin-top: 4px;">{{ form.username.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">อีเมล (Email)</label>
+        <input type="email" name="email" class="form-input" placeholder="name@example.com" value="{{ form.email.value|default:'' }}">
+        {% if form.email.errors %}
+          <div style="color: #ef4444; font-size: 0.82rem; margin-top: 4px;">{{ form.email.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <!-- Password Field with Security Validator -->
+      <div class="form-group">
+        <label class="form-label">รหัสผ่าน (Password) *</label>
+        <input type="password" id="password-input" name="password1" class="form-input" placeholder="รหัสผ่านความปลอดภัยสูง" required>
+        
+        <!-- Strength Meter -->
+        <div class="strength-meter-box">
+          <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 4px;">
+            <span style="color: var(--text-muted);">ระดับความปลอดภัย:</span>
+            <span id="strength-text" style="font-weight: 700; color: var(--text-muted);">ยังไม่ได้กรอก</span>
+          </div>
+          <div class="strength-bar-bg">
+            <div id="strength-bar-fill" class="strength-bar-fill"></div>
+          </div>
+        </div>
+
+        <!-- Requirements Checklist -->
+        <ul class="req-list">
+          <li id="req-len" class="req-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle></svg>
+            <span>อย่างน้อย 8 ตัวอักษร</span>
+          </li>
+          <li id="req-case" class="req-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle></svg>
+            <span>ตัวพิมพ์ใหญ่และเล็ก</span>
+          </li>
+          <li id="req-num" class="req-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle></svg>
+            <span>มีตัวเลข (0-9)</span>
+          </li>
+          <li id="req-sym" class="req-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle></svg>
+            <span>มีสัญลักษณ์ (!@#$%)</span>
+          </li>
+        </ul>
+
+        {% if form.password1.errors %}
+          <div style="color: #ef4444; font-size: 0.82rem; margin-top: 6px;">{{ form.password1.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ยืนยันรหัสผ่านอีกครั้ง *</label>
+        <input type="password" id="password-confirm-input" name="password2" class="form-input" placeholder="กรอกรหัสผ่านเดิมอีกครั้ง" required>
+        <div id="match-text" style="font-size: 0.78rem; margin-top: 4px; display: none;"></div>
+        {% if form.password2.errors %}
+          <div style="color: #ef4444; font-size: 0.82rem; margin-top: 4px;">{{ form.password2.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <button type="submit" id="submit-btn" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 10px;">
+        ลงทะเบียนบัญชีใหม่
+      </button>
+    </form>
+
+    <div style="text-align: center; margin-top: 24px; font-size: 0.9rem; color: var(--text-secondary);">
+      มีบัญชีอยู่แล้ว? <a href="{% url 'account_login' %}" style="color: var(--accent-primary); font-weight: 700;">เข้าสู่ระบบ</a>
+    </div>
+
+  </div>
+
+  <script>
+    const passInput = document.getElementById('password-input');
+    const confirmInput = document.getElementById('password-confirm-input');
+    const barFill = document.getElementById('strength-bar-fill');
+    const strengthText = document.getElementById('strength-text');
+    const matchText = document.getElementById('match-text');
+
+    const reqLen = document.getElementById('req-len');
+    const reqCase = document.getElementById('req-case');
+    const reqNum = document.getElementById('req-num');
+    const reqSym = document.getElementById('req-sym');
+
+    function checkPassword() {
+      const val = passInput.value;
+      let score = 0;
+
+      // 1. Length check (>= 8)
+      const isLen = val.length >= 8;
+      updateReq(reqLen, isLen);
+      if (isLen) score += 1;
+
+      // 2. Upper & Lowercase
+      const isCase = /[a-z]/.test(val) && /[A-Z]/.test(val);
+      updateReq(reqCase, isCase);
+      if (isCase) score += 1;
+
+      // 3. Numbers
+      const isNum = /\d/.test(val);
+      updateReq(reqNum, isNum);
+      if (isNum) score += 1;
+
+      // 4. Symbols
+      const isSym = /[^A-Za-z0-9]/.test(val);
+      updateReq(reqSym, isSym);
+      if (isSym) score += 1;
+
+      // Render Strength
+      if (val.length === 0) {
+        barFill.style.width = '0%';
+        barFill.style.backgroundColor = 'transparent';
+        strengthText.textContent = 'ยังไม่ได้กรอก';
+        strengthText.style.color = 'var(--text-muted)';
+      } else if (score <= 1) {
+        barFill.style.width = '25%';
+        barFill.style.backgroundColor = '#ef4444';
+        strengthText.textContent = 'ง่ายเกินไป ⚠️';
+        strengthText.style.color = '#ef4444';
+      } else if (score === 2) {
+        barFill.style.width = '50%';
+        barFill.style.backgroundColor = '#f59e0b';
+        strengthText.textContent = 'ปานกลาง ⚡';
+        strengthText.style.color = '#f59e0b';
+      } else if (score === 3) {
+        barFill.style.width = '75%';
+        barFill.style.backgroundColor = '#3b82f6';
+        strengthText.textContent = 'ปลอดภัยดี 👍';
+        strengthText.style.color = '#3b82f6';
+      } else {
+        barFill.style.width = '100%';
+        barFill.style.backgroundColor = '#10b981';
+        strengthText.textContent = 'ปลอดภัยสูงมาก 🛡️✨';
+        strengthText.style.color = '#10b981';
+      }
+
+      checkMatch();
+    }
+
+    function updateReq(element, isValid) {
+      if (isValid) {
+        element.classList.add('valid');
+        element.querySelector('svg').innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+      } else {
+        element.classList.remove('valid');
+        element.querySelector('svg').innerHTML = '<circle cx="12" cy="12" r="10"></circle>';
+      }
+    }
+
+    function checkMatch() {
+      if (!confirmInput.value) {
+        matchText.style.display = 'none';
+        return;
+      }
+      matchText.style.display = 'block';
+      if (passInput.value === confirmInput.value) {
+        matchText.textContent = '✓ รหัสผ่านตรงกัน';
+        matchText.style.color = '#10b981';
+      } else {
+        matchText.textContent = '✗ รหัสผ่านไม่ตรงกัน';
+        matchText.style.color = '#ef4444';
+      }
+    }
+
+    passInput.addEventListener('input', checkPassword);
+    confirmInput.addEventListener('input', checkMatch);
+  </script>
+
+</body>
+</html>

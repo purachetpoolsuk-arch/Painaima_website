@@ -1,0 +1,57 @@
+{% load static %}
+{% load i18n %}
+{% load socialaccount %}
+
+<!DOCTYPE html>
+<html lang="th" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>สร้างบัญชีด้วย Google - ไปไหนมา (Painaima)</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="auth-wrapper">
+
+  <div class="auth-card">
+    
+    <div class="auth-header">
+      <div class="brand-icon" style="margin: 0 auto; width: 48px; height: 48px;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+      </div>
+      <h1 class="auth-title">ยินดีต้อนรับสู่ Painaima</h1>
+      <p class="auth-subtitle">คุณกำลังจะสร้างบัญชีผู้ใช้ใหม่ผ่านบัญชี Google: <strong>{{ account.get_provider_account.to_str }}</strong></p>
+    </div>
+
+    <form class="signup" id="signup_form" method="post" action="{% url 'socialaccount_signup' %}">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; padding: 10px 14px; border-radius: var(--radius-md); font-size: 0.85rem; margin-bottom: 16px;">
+          {% for error in form.non_field_errors %}
+            <div>{{ error }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% for field in form %}
+        <div class="form-group">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}
+            <div style="color: #ef4444; font-size: 0.82rem; margin-top: 4px;">{{ field.errors.0 }}</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+
+      <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 14px;">
+        ยืนยันและเริ่มใช้งาน &rarr;
+      </button>
+    </form>
+
+  </div>
+
+</body>
+</html>

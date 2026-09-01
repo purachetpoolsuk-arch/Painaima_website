@@ -1,0 +1,10 @@
+.env
+__pycache__/
+*.py[cod]
+*$py.class
+*.sqlite3
+staticfiles/
+staticfiles_build/
+.vscode/
+.idea/
+.gemini/
