@@ -89,17 +89,36 @@ WSGI_APPLICATION = "painaima_core.wsgi.application"
 
 
 # Database
-if os.getenv("VERCEL") or os.getenv("VERCEL_ENV"):
-    DB_PATH = Path("/tmp") / "db.sqlite3"
+database_url = os.getenv("DATABASE_URL")
+if database_url:
+    try:
+        import dj_database_url
+        DATABASES = {
+            "default": dj_database_url.config(default=database_url, conn_max_age=600)
+        }
+    except Exception:
+        if os.getenv("VERCEL") or os.getenv("VERCEL_ENV"):
+            DB_PATH = Path("/tmp") / "db.sqlite3"
+        else:
+            DB_PATH = BASE_DIR / "db.sqlite3"
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.sqlite3",
+                "NAME": DB_PATH,
+            }
+        }
 else:
-    DB_PATH = BASE_DIR / "db.sqlite3"
+    if os.getenv("VERCEL") or os.getenv("VERCEL_ENV"):
+        DB_PATH = Path("/tmp") / "db.sqlite3"
+    else:
+        DB_PATH = BASE_DIR / "db.sqlite3"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": DB_PATH,
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": DB_PATH,
+        }
     }
-}
 
 
 # Authentication Backends
