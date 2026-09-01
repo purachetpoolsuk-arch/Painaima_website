@@ -32,5 +32,16 @@ if os.getenv("VERCEL") or os.getenv("VERCEL_ENV"):
     except Exception as e:
         print("Vercel DB setup error:", e)
 
-application = get_wsgi_application()
+from whitenoise import WhiteNoise
+
+base_app = get_wsgi_application()
+base_dir = Path(__file__).resolve().parent.parent
+static_dir = base_dir / "static"
+staticfiles_dir = base_dir / "staticfiles"
+
+application = WhiteNoise(base_app, root=str(static_dir), prefix="static/")
+if staticfiles_dir.exists():
+    application.add_files(str(staticfiles_dir), prefix="static/")
+application.add_files(str(static_dir), prefix="static/")
+
 app = application
