@@ -89,10 +89,15 @@ WSGI_APPLICATION = "painaima_core.wsgi.application"
 
 
 # Database
+if os.getenv("VERCEL") or os.getenv("VERCEL_ENV"):
+    DB_PATH = Path("/tmp") / "db.sqlite3"
+else:
+    DB_PATH = BASE_DIR / "db.sqlite3"
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": DB_PATH,
     }
 }
 
