@@ -15,17 +15,43 @@
     </a>
 
     <!-- Top Right Actions -->
-    <div style="display: flex; align-items: center; gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 10px; position: relative;">
       
       {% if user.is_authenticated %}
         <!-- Create Post Button -->
         <a href="{% url 'posts:post_create' %}" class="btn btn-primary btn-sm" style="border-radius: var(--radius-full); padding: 7px 16px; font-weight: 700; gap: 6px;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <line x1="5" y1="12" x2="12" y2="12"></line>
           </svg>
           <span class="hide-on-mobile">สร้างโพสต์</span>
         </a>
+
+        <!-- Notifications / Activity Heart Icon -->
+        <div style="position: relative;">
+          <button type="button" id="btn-header-notifs" class="header-action-icon {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}" onclick="toggleNotificationDropdown(event)" title="การแจ้งเตือน">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+            <span id="nav-notif-badge" class="nav-badge" style="display: none; background: #ef4444;"></span>
+          </button>
+
+          <!-- Desktop Notifications Floating Dropdown -->
+          <div id="notif-dropdown-menu" class="notif-dropdown">
+            <div class="notif-dropdown-header">
+              <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-primary);">การแจ้งเตือน</h4>
+              <button type="button" class="notif-mark-all-btn" onclick="markAllNotificationsRead()">อ่านทั้งหมด</button>
+            </div>
+            <div id="notif-dropdown-list" class="notif-dropdown-body">
+              <div style="padding: 24px 0; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+                กำลังโหลด...
+              </div>
+            </div>
+            <div class="notif-dropdown-footer">
+              <a href="{% url 'core:notifications' %}" class="notif-view-all-link">ดูการแจ้งเตือนทั้งหมด &rarr;</a>
+            </div>
+          </div>
+        </div>
 
         <!-- Direct Messages / Chat Icon -->
         <a href="{% url 'chat:inbox' %}" class="header-action-icon {% if 'chat' in request.resolver_match.app_names %}active{% endif %}" title="ข้อความ (แชท)">
@@ -117,11 +143,23 @@
 </nav>
 
 <script>
-  // Periodic check for unread chat messages badge
   {% if user.is_authenticated %}
   document.addEventListener('DOMContentLoaded', () => {
     checkUnreadMessages();
-    setInterval(checkUnreadMessages, 15000);
+    checkUnreadNotifications();
+    setInterval(checkUnreadMessages, 12000);
+    setInterval(checkUnreadNotifications, 8000);
+
+    // Close notifications dropdown on outside click
+    document.addEventListener('click', (e) => {
+      const dropdown = document.getElementById('notif-dropdown-menu');
+      const btn = document.getElementById('btn-header-notifs');
+      if (dropdown && dropdown.classList.contains('active')) {
+        if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
+          dropdown.classList.remove('active');
+        }
+      }
+    });
   });
 
   async function checkUnreadMessages() {
@@ -143,6 +181,135 @@
       } else {
         if (topBadge) topBadge.style.display = 'none';
         if (bottomBadge) bottomBadge.style.display = 'none';
+      }
+    } catch (e) {}
+  }
+
+  async function checkUnreadNotifications() {
+    try {
+      const res = await fetch("{% url 'core:api_unread_notifications_count' %}");
+      const data = await res.json();
+      const notifBadge = document.getElementById('nav-notif-badge');
+      if (notifBadge) {
+        if (data.unread_count > 0) {
+          notifBadge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
+          notifBadge.style.display = 'flex';
+        } else {
+          notifBadge.style.display = 'none';
+        }
+      }
+    } catch (e) {}
+  }
+
+  async function toggleNotificationDropdown(e) {
+    e.stopPropagation();
+    // On mobile (< 768px), navigate directly to the full notifications page
+    if (window.innerWidth < 768) {
+      window.location.href = "{% url 'core:notifications' %}";
+      return;
+    }
+
+    const dropdown = document.getElementById('notif-dropdown-menu');
+    if (!dropdown) return;
+
+    dropdown.classList.toggle('active');
+
+    if (dropdown.classList.contains('active')) {
+      loadNotificationsDropdown();
+    }
+  }
+
+  async function loadNotificationsDropdown() {
+    const listEl = document.getElementById('notif-dropdown-list');
+    if (!listEl) return;
+
+    try {
+      const res = await fetch("{% url 'core:api_notifications' %}");
+      const data = await res.json();
+
+      if (data.success && data.notifications.length > 0) {
+        let html = '';
+        data.notifications.forEach(n => {
+          let rightHtml = '';
+          if (n.thumbnail_url) {
+            rightHtml = `<a href="${n.target_url}" class="notif-thumbnail-link"><img src="${n.thumbnail_url}" class="notif-thumbnail-img" alt="Thumbnail"></a>`;
+          } else if (n.notification_type === 'follow') {
+            const btnClass = n.is_following_sender ? 'btn-secondary' : 'btn-primary';
+            const btnText = n.is_following_sender ? 'กำลังติดตาม' : 'ติดตามกลับ';
+            rightHtml = `<button type="button" class="btn ${btnClass} btn-sm notif-follow-btn" onclick="toggleNotifFollow(this, '${n.sender_username}')">${btnText}</button>`;
+          }
+
+          html += `
+            <div class="notif-item ${n.is_read ? '' : 'unread'}">
+              <div class="notif-avatar-wrapper">
+                <a href="/u/${n.sender_username}/">
+                  <img src="${n.sender_avatar}" alt="${n.sender_username}" class="avatar avatar-sm">
+                </a>
+              </div>
+              <div class="notif-body">
+                <div class="notif-text">
+                  <a href="/u/${n.sender_username}/" class="notif-username">${n.sender_display_name}</a>
+                  <span class="notif-action">${n.type_text}</span>
+                  <span class="notif-time">${n.created_at}</span>
+                </div>
+              </div>
+              <div class="notif-action-right">
+                ${rightHtml}
+              </div>
+            </div>
+          `;
+        });
+        listEl.innerHTML = html;
+      } else {
+        listEl.innerHTML = `
+          <div style="padding: 36px 16px; text-align: center; color: var(--text-muted);">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="margin: 0 auto 8px auto; display: block; opacity: 0.6;">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+            <p style="font-size: 0.88rem; font-weight: 600;">ยังไม่มีการแจ้งเตือน</p>
+          </div>
+        `;
+      }
+    } catch (err) {
+      console.error("Error loading notifications:", err);
+    }
+  }
+
+  async function markAllNotificationsRead() {
+    try {
+      const res = await fetch("{% url 'core:api_mark_notifications_read' %}", {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}',
+          'Content-Type': 'application/json',
+        }
+      });
+      const data = await res.json();
+      if (data.success) {
+        document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
+        const notifBadge = document.getElementById('nav-notif-badge');
+        if (notifBadge) notifBadge.style.display = 'none';
+      }
+    } catch (e) {}
+  }
+
+  async function toggleNotifFollow(btn, username) {
+    try {
+      const res = await fetch(`/accounts/follow/${username}/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}',
+        }
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (data.is_following) {
+          btn.className = 'btn btn-secondary btn-sm notif-follow-btn';
+          btn.textContent = 'กำลังติดตาม';
+        } else {
+          btn.className = 'btn btn-primary btn-sm notif-follow-btn';
+          btn.textContent = 'ติดตามกลับ';
+        }
       }
     } catch (e) {}
   }

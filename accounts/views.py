@@ -7,6 +7,7 @@ from django.views.decorators.http import require_POST
 from .models import Profile, Follow
 from .forms import ProfileEditForm, UserEditForm
 from posts.models import Post, Like, Bookmark
+from core.models import create_notification
 
 
 @login_required
@@ -85,6 +86,7 @@ def follow_toggle(request, username):
         Follow.objects.create(follower=request.user, following=target_user)
         is_following = True
         message = f"กำลังติดตาม @{target_user.username}"
+        create_notification(target_user, request.user, "follow")
 
     return JsonResponse({
         "success": True,

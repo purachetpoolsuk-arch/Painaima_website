@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load static tz %}
+
+{% block title %}การแจ้งเตือน | Painaima{% endblock %}
+
+{% block content %}
+<div class="content-single-col" style="max-width: 620px;">
+
+  <div class="notif-page-card">
+    
+    <!-- Page Header -->
+    <div class="notif-page-header">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--accent-primary);">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+        <h2 style="font-size: 1.35rem; font-weight: 800; color: var(--text-primary);">การแจ้งเตือน</h2>
+      </div>
+      <span style="font-size: 0.85rem; color: var(--text-muted);">กิจกรรมทั้งหมด</span>
+    </div>
+
+    {% if total_count > 0 %}
+      
+      <!-- Section: วันนี้ -->
+      {% if today_list %}
+        <div class="notif-section">
+          <h3 class="notif-section-title">วันนี้</h3>
+          <div class="notif-list">
+            {% for n in today_list %}
+              {% include 'components/notification_item.html' with notif=n %}
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Section: เมื่อวานนี้ -->
+      {% if yesterday_list %}
+        <div class="notif-section">
+          <h3 class="notif-section-title">เมื่อวานนี้</h3>
+          <div class="notif-list">
+            {% for n in yesterday_list %}
+              {% include 'components/notification_item.html' with notif=n %}
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Section: 7 วันที่ผ่านมา -->
+      {% if this_week_list %}
+        <div class="notif-section">
+          <h3 class="notif-section-title">7 วันที่ผ่านมา</h3>
+          <div class="notif-list">
+            {% for n in this_week_list %}
+              {% include 'components/notification_item.html' with notif=n %}
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Section: ก่อนหน้านี้ -->
+      {% if earlier_list %}
+        <div class="notif-section">
+          <h3 class="notif-section-title">ก่อนหน้านี้</h3>
+          <div class="notif-list">
+            {% for n in earlier_list %}
+              {% include 'components/notification_item.html' with notif=n %}
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+    {% else %}
+      
+      <!-- Empty Notifications State -->
+      <div class="notif-empty-state">
+        <div class="notif-empty-icon">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </div>
+        <h3>ยังไม่มีการแจ้งเตือน</h3>
+        <p>เมื่อมีคนมากดไลก์ คอมเมนต์ แชร์สตอรี่ หรือเริ่มติดตามคุณ กิจกรรมทั้งหมดจะแสดงขึ้นที่นี่</p>
+        <a href="{% url 'core:explore' %}" class="btn btn-primary btn-md">
+          สำรวจผู้คนและโพสต์
+        </a>
+      </div>
+
+    {% endif %}
+
+  </div>
+
+</div>
+{% endblock %}

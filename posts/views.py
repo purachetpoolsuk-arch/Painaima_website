@@ -6,6 +6,7 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from .models import Post, Tag, Like, Comment, Bookmark, Story
 from .forms import PostCreateForm, CommentForm
+from core.models import create_notification
 
 
 @login_required
@@ -73,6 +74,7 @@ def like_toggle(request, pk):
     else:
         Like.objects.create(user=request.user, post=post)
         liked = True
+        create_notification(post.author, request.user, "like_post", post=post)
 
     return JsonResponse({
         "success": True,
@@ -114,6 +116,11 @@ def add_comment(request, pk):
         comment.user = request.user
         comment.post = post
         comment.save()
+
+        # Send notification to post author
+        create_notification(
+            post.author, request.user, "comment_post", post=post, comment=comment, text_preview=comment.text[:120]
+        )
 
         # If AJAX request
         if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.POST.get("is_ajax"):
@@ -194,6 +201,9 @@ def share_to_story(request, pk):
         shared_post=post,
     )
 
+    # Send notification to post author
+    create_notification(post.author, request.user, "share_story", post=post, story=story)
+
     return JsonResponse({
         "success": True,
         "message": "แชร์ลงสตอรี่ของคุณเรียบร้อยแล้ว!",
@@ -254,6 +264,7 @@ def story_like_toggle(request, story_id):
     else:
         story.likes.add(request.user)
         liked = True
+        create_notification(story.user, request.user, "like_story", story=story)
 
     return JsonResponse({
         "success": True,
@@ -276,6 +287,10 @@ def story_reply_api(request, story_id):
         story=story,
         user=request.user,
         text=text,
+    )
+
+    create_notification(
+        story.user, request.user, "reply_story", story=story, text_preview=reply.text[:120]
     )
 
     return JsonResponse({

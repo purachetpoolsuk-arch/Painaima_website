@@ -3,8 +3,11 @@ from django.db.models import Count, Q
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.utils import timezone
+from django.utils.timezone import localtime
 from posts.models import Post, Tag, Story
 from accounts.models import Follow
+from .models import Notification
 
 
 @login_required
@@ -155,3 +158,118 @@ def search_api(request):
         "tags": tags,
         "locations": locations,
     })
+
+
+@login_required
+def notifications_view(request):
+    """Full notifications activity page (Instagram-style grouped by time periods)."""
+    now = timezone.now()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    yesterday_start = today_start - timezone.timedelta(days=1)
+    week_start = today_start - timezone.timedelta(days=7)
+
+    all_notifs = (
+        request.user.notifications_received.select_related(
+            "sender", "sender__profile", "post", "story", "comment"
+        )
+        .all()
+    )
+
+    # Get set of users current user is following
+    following_ids = set(request.user.following_set.values_list("following_id", flat=True))
+
+    today_list = []
+    yesterday_list = []
+    this_week_list = []
+    earlier_list = []
+
+    for n in all_notifs:
+        n.is_following_sender = n.sender_id in following_ids
+        if n.created_at >= today_start:
+            today_list.append(n)
+        elif n.created_at >= yesterday_start:
+            yesterday_list.append(n)
+        elif n.created_at >= week_start:
+            this_week_list.append(n)
+        else:
+            earlier_list.append(n)
+
+    # Mark unread as read
+    request.user.notifications_received.filter(is_read=False).update(is_read=True)
+
+    context = {
+        "today_list": today_list,
+        "yesterday_list": yesterday_list,
+        "this_week_list": this_week_list,
+        "earlier_list": earlier_list,
+        "total_count": all_notifs.count(),
+    }
+    return render(request, "core/notifications.html", context)
+
+
+@login_required
+def api_get_notifications(request):
+    """AJAX endpoint for header notifications dropdown / flyout."""
+    notifs = (
+        request.user.notifications_received.select_related(
+            "sender", "sender__profile", "post", "story"
+        )[:15]
+    )
+
+    following_ids = set(request.user.following_set.values_list("following_id", flat=True))
+
+    data = []
+    for n in notifs:
+        type_text = {
+            "like_post": "กดถูกใจรูปภาพของคุณ",
+            "comment_post": f"แสดงความคิดเห็น: \"{n.text_preview}\"" if n.text_preview else "แสดงความคิดเห็นบนโพสต์ของคุณ",
+            "like_story": "กดถูกใจสตอรี่ของคุณ ❤️",
+            "reply_story": f"ตอบกลับสตอรี่: \"{n.text_preview}\"" if n.text_preview else "ตอบกลับสตอรี่ของคุณ",
+            "share_story": "แชร์โพสต์ของคุณลงในสตอรี่ 📸",
+            "follow": "เริ่มติดตามคุณ",
+        }.get(n.notification_type, "มีการแจ้งเตือนใหม่")
+
+        thumbnail_url = None
+        if n.post and n.post.image:
+            thumbnail_url = n.post.image.url
+        elif n.story and n.story.media_file:
+            thumbnail_url = n.story.media_file.url
+
+        data.append({
+            "id": n.id,
+            "sender_username": n.sender.username,
+            "sender_display_name": n.sender.profile.display_name,
+            "sender_avatar": n.sender.profile.avatar_url,
+            "notification_type": n.notification_type,
+            "type_text": type_text,
+            "target_url": n.get_target_url(),
+            "thumbnail_url": thumbnail_url,
+            "is_read": n.is_read,
+            "is_following_sender": n.sender_id in following_ids,
+            "created_at": localtime(n.created_at).strftime("%H:%M น."),
+        })
+
+    unread_count = request.user.notifications_received.filter(is_read=False).count()
+
+    return JsonResponse({
+        "success": True,
+        "notifications": data,
+        "unread_count": unread_count,
+    })
+
+
+@login_required
+def api_mark_notifications_read(request):
+    """Mark all notifications as read."""
+    if request.method == "POST":
+        request.user.notifications_received.filter(is_read=False).update(is_read=True)
+        return JsonResponse({"success": True})
+    return JsonResponse({"error": "POST required"}, status=405)
+
+
+@login_required
+def api_unread_notifications_count(request):
+    """Quick polling endpoint for navbar notification heart badge."""
+    count = request.user.notifications_received.filter(is_read=False).count()
+    return JsonResponse({"unread_count": count})
+
