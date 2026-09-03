@@ -71,6 +71,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "painaima_core.middleware.ExceptionDiagnosticMiddleware",
 ]
 
 ROOT_URLCONF = "painaima_core.urls"
