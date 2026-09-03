@@ -49,7 +49,12 @@
       <!-- Caption -->
       <div class="form-group">
         <label class="form-label" for="post-caption-input">แคปชั่น (Caption)</label>
-        {{ form.caption }}
+        <div class="caption-editor-container">
+          <div id="caption-backdrop" class="caption-backdrop">
+            <div id="caption-highlights" class="caption-highlights"></div>
+          </div>
+          {{ form.caption }}
+        </div>
         <div style="margin-top: 10px;">
           <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 8px;">⚡ แท็กยอดนิยม — คลิกเพื่อเพิ่มอัตโนมัติ:</div>
           <div style="display: flex; gap: 6px; flex-wrap: wrap;">
@@ -132,10 +137,52 @@
 
 {% block extra_js %}
 <script>
+  function applyHighlights(text) {
+    if (!text) return '';
+    const escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    
+    // Highlight #hashtags (Thai & English) and @mentions
+    const highlighted = escaped
+      .replace(/(#[\w\u0E00-\u0E7F]+)/g, '<mark class="hashtag-mark">$1</mark>')
+      .replace(/(@[a-zA-Z0-9_]+)/g, '<mark class="mention-mark">$1</mark>');
+    
+    return highlighted + (text.endsWith('\n') ? '\n ' : '');
+  }
+
+  function handleCaptionInput() {
+    const textarea = document.getElementById('post-caption-input');
+    const highlights = document.getElementById('caption-highlights');
+    if (textarea && highlights) {
+      highlights.innerHTML = applyHighlights(textarea.value);
+    }
+  }
+
+  function handleCaptionScroll() {
+    const textarea = document.getElementById('post-caption-input');
+    const backdrop = document.getElementById('caption-backdrop');
+    if (textarea && backdrop) {
+      backdrop.scrollTop = textarea.scrollTop;
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const textarea = document.getElementById('post-caption-input');
+    if (textarea) {
+      textarea.addEventListener('input', handleCaptionInput);
+      textarea.addEventListener('scroll', handleCaptionScroll);
+      // Run once on load
+      handleCaptionInput();
+    }
+  });
+
   function appendTag(tag) {
     const caption = document.getElementById('post-caption-input');
     if (caption) {
       caption.value = caption.value.trim() ? caption.value.trim() + ' ' + tag : tag;
+      handleCaptionInput();
       caption.focus();
     }
   }
