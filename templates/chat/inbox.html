@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static tz %}
 
 {% block title %}ข้อความ (Chat) | Painaima{% endblock %}
 
@@ -34,7 +34,7 @@
               <div class="chat-conv-top">
                 <span class="chat-conv-name">{{ conv.other_user.profile.display_name }}</span>
                 {% if conv.last_message %}
-                  <span class="chat-conv-time">{{ conv.last_message.created_at|date:"H:i" }}</span>
+                  <span class="chat-conv-time">{{ conv.last_message.created_at|localtime|date:"H:i" }}</span>
                 {% endif %}
               </div>
               <div class="chat-conv-bottom">
@@ -129,7 +129,7 @@
                     <p class="chat-text">{{ msg.text }}</p>
                   {% endif %}
                 </div>
-                <span class="chat-time">{{ msg.created_at|date:"H:i" }}</span>
+                <span class="chat-time">{{ msg.created_at|localtime|date:"H:i" }}</span>
               </div>
             </div>
           {% endfor %}

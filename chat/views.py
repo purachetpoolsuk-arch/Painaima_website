@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse, HttpResponseForbidden
 from django.views.decorators.http import require_POST, require_GET
 from django.db.models import Max, Q
+from django.utils.timezone import localtime
 from .models import Conversation, Message
 
 
@@ -120,7 +121,7 @@ def api_send_message(request, conversation_id):
             "sender_avatar": msg.sender.profile.avatar_url,
             "text": msg.text,
             "image_url": msg.image.url if msg.image else None,
-            "created_at": msg.created_at.strftime("%H:%M"),
+            "created_at": localtime(msg.created_at).strftime("%H:%M"),
             "is_me": True,
         }
     })
@@ -155,7 +156,7 @@ def api_get_messages(request, conversation_id):
             "sender_avatar": m.sender.profile.avatar_url,
             "text": m.text,
             "image_url": m.image.url if m.image else None,
-            "created_at": m.created_at.strftime("%H:%M"),
+            "created_at": localtime(m.created_at).strftime("%H:%M"),
             "is_me": m.sender == request.user,
         }
         for m in query
