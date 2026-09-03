@@ -34,8 +34,13 @@ def feed_view(request):
     exclude_users = following_ids + [request.user.id]
     suggested_users = User.objects.exclude(id__in=exclude_users).select_related("profile")[:5]
 
-    # Users who have stories
-    story_users = User.objects.filter(stories__isnull=False).distinct().select_related("profile")
+    # Users who have active stories (within last 24 hours)
+    story_cutoff = timezone.now() - timezone.timedelta(hours=24)
+    story_users = (
+        User.objects.filter(stories__created_at__gte=story_cutoff)
+        .distinct()
+        .select_related("profile")
+    )
 
     # Trending tags
     trending_tags = Tag.objects.annotate(num_posts=Count("posts")).order_by("-num_posts")[:8]
@@ -48,7 +53,7 @@ def feed_view(request):
         .order_by("-total")[:6]
     )
 
-    user_has_story = request.user.stories.exists()
+    user_has_story = request.user.stories.filter(created_at__gte=story_cutoff).exists()
 
     context = {
         "posts": posts,

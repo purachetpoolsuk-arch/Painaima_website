@@ -4,6 +4,8 @@ from django.contrib import messages
 from django.http import JsonResponse, HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
+from django.utils import timezone
+from django.utils.timezone import localtime
 from .models import Post, Tag, Like, Comment, Bookmark, Story
 from .forms import PostCreateForm, CommentForm
 from core.models import create_notification
@@ -304,10 +306,27 @@ def story_reply_api(request, story_id):
     })
 
 
+def format_story_time_ago(dt):
+    diff = timezone.now() - dt
+    total_seconds = int(diff.total_seconds())
+    if total_seconds < 60:
+        return "เมื่อสักครู่"
+    elif total_seconds < 3600:
+        mins = max(1, total_seconds // 60)
+        return f"{mins} นาทีที่แล้ว"
+    elif total_seconds < 86400:
+        hours = max(1, total_seconds // 3600)
+        return f"{hours} ชม. ที่แล้ว"
+    else:
+        days = max(1, total_seconds // 86400)
+        return f"{days} วันที่แล้ว"
+
+
 @login_required
 def get_user_stories_api(request, username):
     user_obj = get_object_or_404(User, username=username)
-    stories = Story.objects.filter(user=user_obj).order_by("created_at")
+    cutoff_time = timezone.now() - timezone.timedelta(hours=24)
+    stories = Story.objects.filter(user=user_obj, created_at__gte=cutoff_time).order_by("created_at")
     
     data = [
         {
@@ -315,7 +334,8 @@ def get_user_stories_api(request, username):
             "media_url": s.media_file.url if s.media_file else "",
             "media_type": s.media_type,
             "caption": s.caption,
-            "created_at": s.created_at.strftime("%H:%M น."),
+            "created_at": f"{format_story_time_ago(s.created_at)} • {localtime(s.created_at).strftime('%H:%M น.')}",
+            "time_ago": format_story_time_ago(s.created_at),
             "likes_count": s.likes.count(),
             "has_liked": request.user in s.likes.all(),
             "shared_post_url": s.shared_post.get_absolute_url() if s.shared_post else "",
