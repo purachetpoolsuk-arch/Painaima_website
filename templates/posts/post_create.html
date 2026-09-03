@@ -50,12 +50,24 @@
       <div class="form-group">
         <label class="form-label" for="post-caption-input">แคปชั่น (Caption)</label>
         {{ form.caption }}
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
-          <span style="font-size: 0.78rem; color: var(--text-muted);">ใส่ #แฮชแท็ก ในแคปชั่นได้ เช่น #cafe #travel #เที่ยวไทย</span>
-          <div style="display: flex; gap: 6px;">
-            <button type="button" class="chip chip-tag" style="padding: 2px 8px; font-size: 0.75rem;" onclick="appendTag('#cafehopping')">#cafehopping</button>
-            <button type="button" class="chip chip-tag" style="padding: 2px 8px; font-size: 0.75rem;" onclick="appendTag('#เที่ยวไทย')">#เที่ยวไทย</button>
-            <button type="button" class="chip chip-tag" style="padding: 2px 8px; font-size: 0.75rem;" onclick="appendTag('#vibe')">#vibe</button>
+        <div style="margin-top: 10px;">
+          <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 8px;">⚡ แท็กยอดนิยม — คลิกเพื่อเพิ่มอัตโนมัติ:</div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button type="button" class="chip chip-tag" onclick="appendTag('#cafehopping')">#cafehopping</button>
+            <button type="button" class="chip chip-tag" onclick="appendTag('#เที่ยวไทย')">#เที่ยวไทย</button>
+            <button type="button" class="chip chip-tag" onclick="appendTag('#วิวสวย')">#วิวสวย</button>
+            <button type="button" class="chip chip-tag" onclick="appendTag('#ทะเล')">#ทะเล</button>
+            <button type="button" class="chip chip-tag" onclick="appendTag('#ภูเขา')">#ภูเขา</button>
+            <button type="button" class="chip chip-tag" onclick="appendTag('#กรุงเทพ')">#กรุงเทพ</button>
+            <button type="button" class="chip chip-tag" onclick="appendTag('#เชียงใหม่')">#เชียงใหม่</button>
+            <button type="button" class="chip chip-tag" onclick="appendTag('#ภูเก็ต')">#ภูเก็ต</button>
+            <button type="button" class="chip chip-tag" onclick="appendTag('#เขาใหญ่')">#เขาใหญ่</button>
+            <button type="button" class="chip chip-tag" onclick="appendTag('#กระบี่')">#กระบี่</button>
+            <button type="button" class="chip chip-tag" onclick="appendTag('#พัทยา')">#พัทยา</button>
+            <button type="button" class="chip chip-tag" onclick="appendTag('#ทะเลแหวก')">#ทะเลแหวก</button>
+            <button type="button" class="chip chip-tag" onclick="appendTag('#อุทยาน')">#อุทยาน</button>
+            <button type="button" class="chip chip-tag" onclick="appendTag('#สตรีทฟู้ด')">#สตรีทฟู้ด</button>
+            <button type="button" class="chip chip-tag" onclick="appendTag('#vibe')">#vibe</button>
           </div>
         </div>
         {% if form.caption.errors %}
@@ -65,15 +77,34 @@
 
       <!-- Location -->
       <div class="form-group">
-        <label class="form-label" for="post-location-input">สถานที่ / เช็คอิน (Location)</label>
+        <label class="form-label" for="post-location-input">📍 สถานที่ท่องเที่ยว / จังหวัด</label>
         <div style="position: relative;">
           {{ form.location }}
         </div>
-        <div style="display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap;">
-          <span style="font-size: 0.78rem; color: var(--text-muted); align-self: center;">ตัวอย่างสถานที่:</span>
-          <button type="button" class="chip chip-loc" style="padding: 2px 8px; font-size: 0.75rem;" onclick="setLocation('Siam Square, Bangkok')">Siam Square</button>
-          <button type="button" class="chip chip-loc" style="padding: 2px 8px; font-size: 0.75rem;" onclick="setLocation('เขาใหญ่, นครราชสีมา')">เขาใหญ่</button>
-          <button type="button" class="chip chip-loc" style="padding: 2px 8px; font-size: 0.75rem;" onclick="setLocation('นิมมานเหมินท์, เชียงใหม่')">เชียงใหม่</button>
+        <div style="margin-top: 10px;">
+          <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 8px;">🗺️ เลือกจังหวัด / สถานที่ยอดนิยม:</div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button type="button" class="chip chip-loc" onclick="setLocation('กรุงเทพมหานคร')">🏙️ กรุงเทพฯ</button>
+            <button type="button" class="chip chip-loc" onclick="setLocation('เชียงใหม่')">🌿 เชียงใหม่</button>
+            <button type="button" class="chip chip-loc" onclick="setLocation('ภูเก็ต')">🏖️ ภูเก็ต</button>
+            <button type="button" class="chip chip-loc" onclick="setLocation('กระบี่')">🌊 กระบี่</button>
+            <button type="button" class="chip chip-loc" onclick="setLocation('เกาะสมุย, สุราษฎร์ธานี')">🏝️ เกาะสมุย</button>
+            <button type="button" class="chip chip-loc" onclick="setLocation('พัทยา, ชลบุรี')">🌅 พัทยา</button>
+            <button type="button" class="chip chip-loc" onclick="setLocation('เขาใหญ่, นครราชสีมา')">⛰️ เขาใหญ่</button>
+            <button type="button" class="chip chip-loc" onclick="setLocation('อยุธยา')">🛕 อยุธยา</button>
+            <button type="button" class="chip chip-loc" onclick="setLocation('สุโขทัย')">🏯 สุโขทัย</button>
+            <button type="button" class="chip chip-loc" onclick="setLocation('เชียงราย')">🌄 เชียงราย</button>
+            <button type="button" class="chip chip-loc" onclick="setLocation('หัวหิน, ประจวบคีรีขันธ์')">🌊 หัวหิน</button>
+            <button type="button" class="chip chip-loc" onclick="setLocation('สมุทรสงคราม')">🚣 สมุทรสงคราม</button>
+            <button type="button" class="chip chip-loc" onclick="setLocation('พะเยา')">🏔️ พะเยา</button>
+            <button type="button" class="chip chip-loc" onclick="setLocation('น่าน')">🌾 น่าน</button>
+            <button type="button" class="chip chip-loc" onclick="setLocation('สตูล')">🤿 สตูล</button>
+            <button type="button" class="chip chip-loc" onclick="setLocation('ลำปาง')">🐘 ลำปาง</button>
+            <button type="button" class="chip chip-loc" onclick="setLocation('เพชรบุรี')">🌃 เพชรบุรี</button>
+            <button type="button" class="chip chip-loc" onclick="setLocation('กาญจนบุรี')">🌉 กาญจนบุรี</button>
+            <button type="button" class="chip chip-loc" onclick="setLocation('ตรัง')">🏖️ ตรัง</button>
+            <button type="button" class="chip chip-loc" onclick="setLocation('เลย')">🌬️ เลย</button>
+          </div>
         </div>
         {% if form.location.errors %}
           <div style="color: #ef4444; font-size: 0.82rem; margin-top: 4px;">{{ form.location.errors.0 }}</div>
