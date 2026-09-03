@@ -204,18 +204,24 @@ LOGIN_URL = "account_login"
 LOGIN_REDIRECT_URL = "core:feed"
 LOGOUT_REDIRECT_URL = "account_login"
 
+# Email Backend (console backend avoids SMTP connection errors)
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
 # Allauth Settings
 ACCOUNT_LOGIN_METHODS = {"email", "username"}
 ACCOUNT_SIGNUP_FIELDS = ["email", "username*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_LOGOUT_ON_GET = True
 ACCOUNT_SESSION_REMEMBER = True
-ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https" if not DEBUG else "http"
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https" if (os.getenv("VERCEL") or os.getenv("VERCEL_ENV") or not DEBUG) else "http"
 
 # Social Account (Google OAuth) Settings
 SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_STORE_TOKENS = False
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+SOCIALACCOUNT_ADAPTER = "accounts.adapters.CustomSocialAccountAdapter"
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
         "SCOPE": [
