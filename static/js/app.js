@@ -469,6 +469,16 @@ function renderStorySlide(user, index) {
     likeSvg.style.stroke = '#ffffff';
   }
 
+  // Show/hide delete button (only for story owner)
+  const deleteBtn = document.getElementById('story-delete-btn');
+  if (deleteBtn) {
+    if (user.is_self) {
+      deleteBtn.style.display = 'flex';
+    } else {
+      deleteBtn.style.display = 'none';
+    }
+  }
+
   // Multi-segment Progress Bar Rendering
   renderProgressBars(index, story.media_type === 'video' ? 8000 : 5000);
 

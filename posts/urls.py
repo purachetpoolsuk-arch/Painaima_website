@@ -17,5 +17,6 @@ urlpatterns = [
     path("story/create/", views.story_create_view, name="story_create"),
     path("story/<int:story_id>/like/", views.story_like_toggle, name="story_like_toggle"),
     path("story/<int:story_id>/reply/", views.story_reply_api, name="story_reply_api"),
+    path("story/<int:story_id>/delete/", views.story_delete_api, name="story_delete_api"),
     path("api/stories/<str:username>/", views.get_user_stories_api, name="get_user_stories_api"),
 ]

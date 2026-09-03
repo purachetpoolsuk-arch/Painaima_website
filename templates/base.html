@@ -186,13 +186,26 @@
             <div id="story-time" style="font-size: 0.72rem; color: rgba(255,255,255,0.8);"></div>
           </div>
         </div>
-        <!-- Centered Close Button (X) -->
-        <button type="button" onclick="closeStoryViewer()" title="ปิด" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: 32px; height: 32px; border-radius: var(--radius-full); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s ease;" onmouseover="this.style.background='rgba(0,0,0,0.8)'" onmouseout="this.style.background='rgba(0,0,0,0.5)'">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
+        <!-- Right action buttons: Delete (owner only) + Close -->
+        <div style="display:flex; align-items:center; gap:8px;">
+          <!-- Delete Story Button — visible only to story owner -->
+          <button id="story-delete-btn" type="button" onclick="deleteCurrentStory()" title="ลบสตอรี่" style="display:none; background: rgba(180,0,0,0.55); border: 1px solid rgba(255,255,255,0.2); color: #fff; width: 32px; height: 32px; border-radius: var(--radius-full); cursor: pointer; align-items: center; justify-content: center; transition: all 0.15s ease;" onmouseover="this.style.background='rgba(200,30,30,0.85)'" onmouseout="this.style.background='rgba(180,0,0,0.55)'">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6l-1 14H6L5 6"></path>
+              <path d="M10 11v6"></path>
+              <path d="M14 11v6"></path>
+              <path d="M9 6V4h6v2"></path>
+            </svg>
+          </button>
+          <!-- Close Button (X) -->
+          <button type="button" onclick="closeStoryViewer()" title="ปิด" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: 32px; height: 32px; border-radius: var(--radius-full); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s ease;" onmouseover="this.style.background='rgba(0,0,0,0.8)'" onmouseout="this.style.background='rgba(0,0,0,0.5)'">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <!-- Floating Hearts Canvas Container -->
@@ -280,5 +293,45 @@
   <!-- JavaScript -->
   <script src="{% static 'js/app.js' %}"></script>
   {% block extra_js %}{% endblock %}
+
+  <script>
+  // Delete current story (owner only)
+  async function deleteCurrentStory() {
+    if (!currentStoryData || currentStoryData.length === 0) return;
+    const story = currentStoryData[currentStoryIndex];
+    if (!story) return;
+
+    if (!confirm('ยืนยันการลบสตอรี่นี้?')) return;
+
+    try {
+      const res = await fetch(`/p/story/${story.id}/delete/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('ลบสตอรี่เรียบร้อยแล้ว ✓', 'success');
+        // Remove this story from the local array
+        currentStoryData.splice(currentStoryIndex, 1);
+        if (currentStoryData.length === 0) {
+          // No more stories for this user
+          closeStoryViewer();
+          // Remove the story ring bubble from the feed
+          const ringWrapper = document.querySelector(`[data-story-username="${currentStoryUsername}"]`);
+          if (ringWrapper) ringWrapper.remove();
+        } else {
+          // Adjust index and show next/prev slide
+          if (currentStoryIndex >= currentStoryData.length) currentStoryIndex = currentStoryData.length - 1;
+          renderStorySlide(currentStoryUserObj, currentStoryIndex);
+        }
+      } else {
+        showToast(data.error || 'เกิดข้อผิดพลาด กรุณาลองใหม่');
+      }
+    } catch (err) {
+      console.error('Delete story error:', err);
+      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่');
+    }
+  }
+  </script>
 </body>
 </html>

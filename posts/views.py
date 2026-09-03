@@ -306,6 +306,17 @@ def story_reply_api(request, story_id):
     })
 
 
+@login_required
+@require_POST
+def story_delete_api(request, story_id):
+    story = get_object_or_404(Story, pk=story_id)
+    if story.user != request.user:
+        return JsonResponse({"success": False, "error": "คุณไม่มีสิทธิ์ลบสตอรี่นี้"}, status=403)
+    
+    story.delete()
+    return JsonResponse({"success": True, "message": "ลบสตอรี่เรียบร้อยแล้ว"})
+
+
 def format_story_time_ago(dt):
     diff = timezone.now() - dt
     total_seconds = int(diff.total_seconds())
