@@ -111,6 +111,28 @@ def api_send_message(request, conversation_id):
     # Touch conversation timestamp
     conversation.save(update_fields=["updated_at"])
 
+    # If the user is chatting with admin and user is not admin, admin can auto-reply to simulate live conversation
+    other_user = conversation.get_other_user(request.user)
+    if other_user and other_user.username == "admin" and request.user.username != "admin":
+        auto_replies = [
+            f"สวัสดีครับคุณ {request.user.profile.display_name}! ยินดีต้อนรับสู่ Painaima (ไปไหนมา) ครับ 🌊✨",
+            "ระบบแชทเชื่อมต่อกับ Neon Database และ Cloudinary เรียบร้อยแล้ว ข้อความทั้งหมดถูกบันทึกไว้อย่างถาวรครับ 🚀",
+            "ขอบคุณที่ทดสอบระบบแชทนะครับ! มีสถานที่ท่องเที่ยวหรือคาเฟ่เด็ดๆ อย่าลืมแชร์ลงโพสต์และสตอรี่ด้วยนะค้าบ 📸",
+        ]
+        import random
+        # Pick reply based on message count
+        msg_count = conversation.messages.count()
+        reply_idx = (msg_count // 2) % len(auto_replies)
+        admin_reply_text = auto_replies[reply_idx]
+        
+        # Create admin reply
+        Message.objects.create(
+            conversation=conversation,
+            sender=other_user,
+            text=admin_reply_text,
+        )
+        conversation.save(update_fields=["updated_at"])
+
     return JsonResponse({
         "success": True,
         "message": {

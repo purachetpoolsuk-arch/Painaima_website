@@ -228,8 +228,13 @@
   let pollingInterval = null;
 
   document.addEventListener('DOMContentLoaded', () => {
-    // Scroll chat to bottom
+    // Scroll chat to bottom immediately
     scrollChatToBottom();
+    setTimeout(scrollChatToBottom, 150);
+
+    // Focus input field if conversation is open
+    const inputEl = document.getElementById('chat-text-input');
+    if (inputEl) inputEl.focus();
 
     // Get the latest message ID currently in DOM
     const existingMsgs = document.querySelectorAll('.chat-message-row');
@@ -238,9 +243,9 @@
       lastMessageId = parseInt(lastMsgEl.dataset.msgId) || 0;
     }
 
-    // Start Realtime Polling every 3.5s if inside a conversation
+    // Start Fast Realtime Polling (every 2.2s) if inside a conversation
     if (activeConvId) {
-      pollingInterval = setInterval(pollNewMessages, 3500);
+      pollingInterval = setInterval(pollNewMessages, 2200);
     }
   });
 
@@ -309,7 +314,10 @@
       if (data.success) {
         appendSingleMessage(data.message);
         lastMessageId = Math.max(lastMessageId, data.message.id);
+        updateSidebarPreview(activeConvId, data.message);
         scrollChatToBottom();
+        // Immediately poll to catch any instant responses
+        setTimeout(pollNewMessages, 600);
       }
     } catch (err) {
       console.error("Error sending message:", err);
@@ -330,6 +338,7 @@
           if (!document.querySelector(`[data-msg-id="${msg.id}"]`)) {
             appendSingleMessage(msg);
             lastMessageId = Math.max(lastMessageId, msg.id);
+            updateSidebarPreview(activeConvId, msg);
           }
         });
         scrollChatToBottom();
@@ -354,7 +363,7 @@
 
     let imgHtml = '';
     if (msg.image_url) {
-      imgHtml = `<a href="${msg.image_url}" target="_blank" class="chat-img-link"><img src="${msg.image_url}" alt="รูปภาพแนบ" class="chat-img-attachment"></a>`;
+      imgHtml = `<a href="${msg.image_url}" target="_blank" class="chat-img-link"><img src="${msg.image_url}" alt="รูปภาพแนบ" class="chat-img-attachment" onload="scrollChatToBottom()"></a>`;
     }
 
     let textHtml = '';
@@ -374,6 +383,22 @@
     `;
 
     listWrapper.appendChild(row);
+  }
+
+  function updateSidebarPreview(convId, msg) {
+    const convLink = document.querySelector(`a[href*="/chat/${convId}/"]`);
+    if (convLink) {
+      const previewEl = convLink.querySelector('.chat-conv-preview');
+      const timeEl = convLink.querySelector('.chat-conv-time');
+      if (previewEl) {
+        const prefix = msg.is_me ? 'คุณ: ' : '';
+        const previewText = msg.text ? msg.text : '📷 รูปภาพ';
+        previewEl.textContent = prefix + previewText;
+      }
+      if (timeEl) {
+        timeEl.textContent = msg.created_at;
+      }
+    }
   }
 
   function escapeHtml(text) {

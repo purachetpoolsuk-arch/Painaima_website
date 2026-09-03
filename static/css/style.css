@@ -1407,22 +1407,23 @@ button, input, textarea, select {
 /* Chat Main Container */
 .chat-container {
   display: flex;
-  max-width: 1040px;
-  height: calc(100vh - 150px);
-  min-height: 560px;
-  max-height: 820px;
-  margin: 10px auto;
+  width: 100%;
+  max-width: 1280px;
+  height: calc(100vh - 95px);
+  min-height: 640px;
+  max-height: 920px;
+  margin: 0 auto;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
 }
 
 /* Chat Sidebar */
 .chat-sidebar {
-  width: 320px;
-  min-width: 280px;
+  width: 360px;
+  min-width: 300px;
   border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
