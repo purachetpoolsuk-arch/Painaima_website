@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "accounts.apps.AccountsConfig",
     "posts.apps.PostsConfig",
     "core.apps.CoreConfig",
+    "chat.apps.ChatConfig",
 ]
 
 SITE_ID = 1

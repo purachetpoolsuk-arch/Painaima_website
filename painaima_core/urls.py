@@ -8,6 +8,7 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     path("u/", include("accounts.urls")),
     path("p/", include("posts.urls")),
+    path("chat/", include("chat.urls")),
     path("", include("core.urls")),
 ]
 

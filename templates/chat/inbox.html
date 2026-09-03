@@ -1,0 +1,385 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}ข้อความ (Chat) | Painaima{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+  
+  <!-- Left Column: Conversations Sidebar -->
+  <aside class="chat-sidebar {% if active_conversation %}hide-mobile{% endif %}">
+    
+    <div class="chat-sidebar-header">
+      <div class="chat-user-profile">
+        <img src="{{ request.user.profile.avatar_url }}" alt="{{ request.user.username }}" class="avatar avatar-sm">
+        <span class="chat-username">@{{ request.user.username }}</span>
+      </div>
+      <button type="button" class="btn-icon" onclick="openNewChatModal()" title="เขียนข้อความใหม่">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 20h9"></path>
+          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Conversations List -->
+    <div class="chat-conv-list">
+      {% if conversations %}
+        {% for conv in conversations %}
+          <a href="{% url 'chat:conversation' conv.id %}" class="chat-conv-item {% if conv.is_active %}active{% endif %}">
+            <div class="chat-avatar-wrapper">
+              <img src="{{ conv.other_user.profile.avatar_url }}" alt="{{ conv.other_user.username }}" class="avatar avatar-md">
+            </div>
+            <div class="chat-conv-info">
+              <div class="chat-conv-top">
+                <span class="chat-conv-name">{{ conv.other_user.profile.display_name }}</span>
+                {% if conv.last_message %}
+                  <span class="chat-conv-time">{{ conv.last_message.created_at|date:"H:i" }}</span>
+                {% endif %}
+              </div>
+              <div class="chat-conv-bottom">
+                <p class="chat-conv-preview">
+                  {% if conv.last_message %}
+                    {% if conv.last_message.sender == request.user %}คุณ: {% endif %}
+                    {% if conv.last_message.image and not conv.last_message.text %}📷 รูปภาพ{% else %}{{ conv.last_message.text|truncatechars:35 }}{% endif %}
+                  {% else %}
+                    <em>เริ่มบทสนทนาใหม่</em>
+                  {% endif %}
+                </p>
+                {% if conv.unread_count > 0 %}
+                  <span class="badge-unread">{{ conv.unread_count }}</span>
+                {% endif %}
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+      {% else %}
+        <div class="chat-empty-sidebar">
+          <div class="empty-icon-bubble">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </div>
+          <p style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">ยังไม่มีข้อความ</p>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px;">เริ่มคุยกับเพื่อนใหม่ใน Painaima เลย</p>
+          <button type="button" class="btn btn-primary btn-sm" onclick="openNewChatModal()">
+            ส่งข้อความแรก
+          </button>
+        </div>
+      {% endif %}
+    </div>
+
+  </aside>
+
+  <!-- Right Column: Active Chat Area -->
+  <section class="chat-main {% if not active_conversation %}hide-mobile-placeholder{% endif %}">
+    {% if active_conversation %}
+      
+      <!-- Chat Header -->
+      <header class="chat-main-header">
+        <a href="{% url 'chat:inbox' %}" class="btn-icon chat-back-btn" title="กลับไปรายการแชท">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </a>
+        <a href="{% url 'accounts:profile' other_user.username %}" class="chat-target-info">
+          <div class="chat-avatar-wrapper">
+            <img src="{{ other_user.profile.avatar_url }}" alt="{{ other_user.username }}" class="avatar avatar-sm">
+          </div>
+          <div>
+            <div class="chat-target-name">{{ other_user.profile.display_name }}</div>
+            <div class="chat-target-status">@{{ other_user.username }}</div>
+          </div>
+        </a>
+        <div class="chat-header-actions">
+          <a href="{% url 'accounts:profile' other_user.username %}" class="btn-icon" title="ดูโปรไฟล์">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          </a>
+        </div>
+      </header>
+
+      <!-- Chat Messages Scrollable Area -->
+      <div id="chat-messages-body" class="chat-messages-body">
+        
+        <div class="chat-intro-banner">
+          <img src="{{ other_user.profile.avatar_url }}" alt="{{ other_user.username }}" class="avatar avatar-lg" style="margin-bottom: 12px;">
+          <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">{{ other_user.profile.display_name }}</h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;">@{{ other_user.username }}</p>
+          <a href="{% url 'accounts:profile' other_user.username %}" class="btn btn-secondary btn-sm">ดูโปรไฟล์เต็ม</a>
+        </div>
+
+        <div id="messages-list-wrapper">
+          {% for msg in messages_list %}
+            <div class="chat-message-row {% if msg.sender == request.user %}me{% else %}them{% endif %}" data-msg-id="{{ msg.id }}">
+              {% if msg.sender != request.user %}
+                <img src="{{ msg.sender.profile.avatar_url }}" alt="{{ msg.sender.username }}" class="avatar avatar-xs chat-msg-avatar">
+              {% endif %}
+              <div class="chat-bubble-container">
+                <div class="chat-bubble">
+                  {% if msg.image %}
+                    <a href="{{ msg.image.url }}" target="_blank" class="chat-img-link">
+                      <img src="{{ msg.image.url }}" alt="รูปภาพแนบ" class="chat-img-attachment">
+                    </a>
+                  {% endif %}
+                  {% if msg.text %}
+                    <p class="chat-text">{{ msg.text }}</p>
+                  {% endif %}
+                </div>
+                <span class="chat-time">{{ msg.created_at|date:"H:i" }}</span>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Chat Input Area -->
+      <footer class="chat-footer">
+        
+        <!-- Image Preview Container -->
+        <div id="chat-image-preview-box" class="chat-image-preview-box" style="display: none;">
+          <div style="position: relative; display: inline-block;">
+            <img id="chat-image-preview-img" src="" alt="Preview">
+            <button type="button" class="chat-img-remove-btn" onclick="removeSelectedChatImage()">&times;</button>
+          </div>
+        </div>
+
+        <form id="chat-send-form" class="chat-send-form" onsubmit="handleSendMessage(event)">
+          {% csrf_token %}
+          <label for="chat-image-input" class="btn-icon chat-attach-btn" title="แนบรูปภาพ">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+            <input type="file" id="chat-image-input" name="image" accept="image/*" style="display: none;" onchange="handleChatImageSelect(event)">
+          </label>
+
+          <input type="text" id="chat-text-input" name="text" class="chat-input" placeholder="พิมพ์ข้อความ..." autocomplete="off">
+
+          <button type="submit" id="chat-submit-btn" class="chat-send-btn" title="ส่ง">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </form>
+      </footer>
+
+    {% else %}
+      <!-- Empty State when no conversation is selected on desktop -->
+      <div class="chat-placeholder">
+        <div class="chat-placeholder-content">
+          <div class="chat-placeholder-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+            </svg>
+          </div>
+          <h2>ข้อความของคุณ</h2>
+          <p>ส่งข้อความและรูปภาพส่วนตัวหาเพื่อนๆ ได้ทันที</p>
+          <button type="button" class="btn btn-primary btn-md" onclick="openNewChatModal()">
+            เริ่มการสนทนา
+          </button>
+        </div>
+      </div>
+    {% endif %}
+  </section>
+
+</div>
+
+<!-- New Chat Modal -->
+<div id="new-chat-modal" class="modal-backdrop" onclick="if(event.target===this) closeNewChatModal();">
+  <div class="modal-card" style="max-width: 440px;">
+    <div class="modal-header">
+      <h3 class="modal-title">ส่งข้อความใหม่</h3>
+      <button type="button" class="btn-icon" onclick="closeNewChatModal()">&times;</button>
+    </div>
+    <div class="modal-body" style="padding: 16px;">
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;">เลือกผู้ใช้ที่คุณต้องการส่งข้อความถึง:</p>
+      <div class="chat-user-select-list">
+        {% if all_users %}
+          {% for u in all_users %}
+            <a href="{% url 'chat:start_chat' u.username %}" class="chat-user-select-item">
+              <img src="{{ u.profile.avatar_url }}" alt="{{ u.username }}" class="avatar avatar-sm">
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">{{ u.profile.display_name }}</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">@{{ u.username }}</div>
+              </div>
+              <span class="btn btn-primary btn-sm" style="padding: 4px 12px; font-size: 0.8rem;">คุยเลย</span>
+            </a>
+          {% endfor %}
+        {% else %}
+          <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 20px 0;">ยังไม่มีผู้ใช้อื่นในระบบ</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  let activeConvId = {% if active_conversation %}{{ active_conversation.id }}{% else %}null{% endif %};
+  let lastMessageId = 0;
+  let pollingInterval = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Scroll chat to bottom
+    scrollChatToBottom();
+
+    // Get the latest message ID currently in DOM
+    const existingMsgs = document.querySelectorAll('.chat-message-row');
+    if (existingMsgs.length > 0) {
+      const lastMsgEl = existingMsgs[existingMsgs.length - 1];
+      lastMessageId = parseInt(lastMsgEl.dataset.msgId) || 0;
+    }
+
+    // Start Realtime Polling every 3.5s if inside a conversation
+    if (activeConvId) {
+      pollingInterval = setInterval(pollNewMessages, 3500);
+    }
+  });
+
+  function scrollChatToBottom() {
+    const body = document.getElementById('chat-messages-body');
+    if (body) {
+      body.scrollTop = body.scrollHeight;
+    }
+  }
+
+  function openNewChatModal() {
+    document.getElementById('new-chat-modal').classList.add('active');
+  }
+
+  function closeNewChatModal() {
+    document.getElementById('new-chat-modal').classList.remove('active');
+  }
+
+  function handleChatImageSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      document.getElementById('chat-image-preview-img').src = event.target.result;
+      document.getElementById('chat-image-preview-box').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removeSelectedChatImage() {
+    document.getElementById('chat-image-input').value = '';
+    document.getElementById('chat-image-preview-box').style.display = 'none';
+    document.getElementById('chat-image-preview-img').src = '';
+  }
+
+  async function handleSendMessage(e) {
+    e.preventDefault();
+    if (!activeConvId) return;
+
+    const textInput = document.getElementById('chat-text-input');
+    const imageInput = document.getElementById('chat-image-input');
+    const textVal = textInput.value.trim();
+    const hasImage = imageInput.files.length > 0;
+
+    if (!textVal && !hasImage) return;
+
+    const formData = new FormData();
+    formData.append('text', textVal);
+    if (hasImage) {
+      formData.append('image', imageInput.files[0]);
+    }
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+    // Clear inputs immediately
+    textInput.value = '';
+    removeSelectedChatImage();
+    const submitBtn = document.getElementById('chat-submit-btn');
+    submitBtn.disabled = true;
+
+    try {
+      const res = await fetch(`/chat/api/${activeConvId}/send/`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        appendSingleMessage(data.message);
+        lastMessageId = Math.max(lastMessageId, data.message.id);
+        scrollChatToBottom();
+      }
+    } catch (err) {
+      console.error("Error sending message:", err);
+    } finally {
+      submitBtn.disabled = false;
+      textInput.focus();
+    }
+  }
+
+  async function pollNewMessages() {
+    if (!activeConvId) return;
+    try {
+      const res = await fetch(`/chat/api/${activeConvId}/messages/?after_id=${lastMessageId}`);
+      const data = await res.json();
+      if (data.success && data.messages.length > 0) {
+        data.messages.forEach(msg => {
+          // Avoid appending duplicate messages
+          if (!document.querySelector(`[data-msg-id="${msg.id}"]`)) {
+            appendSingleMessage(msg);
+            lastMessageId = Math.max(lastMessageId, msg.id);
+          }
+        });
+        scrollChatToBottom();
+      }
+    } catch (err) {
+      console.error("Polling error:", err);
+    }
+  }
+
+  function appendSingleMessage(msg) {
+    const listWrapper = document.getElementById('messages-list-wrapper');
+    if (!listWrapper) return;
+
+    const row = document.createElement('div');
+    row.className = `chat-message-row ${msg.is_me ? 'me' : 'them'}`;
+    row.dataset.msgId = msg.id;
+
+    let avatarHtml = '';
+    if (!msg.is_me) {
+      avatarHtml = `<img src="${msg.sender_avatar}" alt="${msg.sender_username}" class="avatar avatar-xs chat-msg-avatar">`;
+    }
+
+    let imgHtml = '';
+    if (msg.image_url) {
+      imgHtml = `<a href="${msg.image_url}" target="_blank" class="chat-img-link"><img src="${msg.image_url}" alt="รูปภาพแนบ" class="chat-img-attachment"></a>`;
+    }
+
+    let textHtml = '';
+    if (msg.text) {
+      textHtml = `<p class="chat-text">${escapeHtml(msg.text)}</p>`;
+    }
+
+    row.innerHTML = `
+      ${avatarHtml}
+      <div class="chat-bubble-container">
+        <div class="chat-bubble">
+          ${imgHtml}
+          ${textHtml}
+        </div>
+        <span class="chat-time">${msg.created_at}</span>
+      </div>
+    `;
+
+    listWrapper.appendChild(row);
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.innerText = text;
+    return div.innerHTML;
+  }
+</script>
+{% endblock %}
