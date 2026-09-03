@@ -8,3 +8,4 @@ staticfiles_build/
 .vscode/
 .idea/
 .gemini/
+media/

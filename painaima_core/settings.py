@@ -28,6 +28,10 @@ DEBUG = os.getenv("DEBUG", "True") == "True"
 ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = ["https://*.vercel.app", "http://127.0.0.1:8000", "http://localhost:8000"]
 
+# Security & Proxy Settings for Vercel / Reverse Proxy
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+
 
 # Application definition
 
@@ -96,9 +100,10 @@ if database_url:
     try:
         import dj_database_url
         DATABASES = {
-            "default": dj_database_url.config(default=database_url, conn_max_age=600)
+            "default": dj_database_url.parse(database_url, conn_max_age=600)
         }
-    except Exception:
+    except Exception as e:
+        print(f"Warning: Failed to parse DATABASE_URL ({e}), falling back to SQLite.")
         if os.getenv("VERCEL") or os.getenv("VERCEL_ENV"):
             DB_PATH = Path("/tmp") / "db.sqlite3"
         else:
@@ -205,10 +210,12 @@ ACCOUNT_SIGNUP_FIELDS = ["email", "username*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_LOGOUT_ON_GET = True
 ACCOUNT_SESSION_REMEMBER = True
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https" if not DEBUG else "http"
 
 # Social Account (Google OAuth) Settings
 SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_STORE_TOKENS = False
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
         "SCOPE": [
@@ -222,8 +229,15 @@ SOCIALACCOUNT_PROVIDERS = {
         "APP": {
             "client_id": os.getenv("GOOGLE_CLIENT_ID", "").strip(),
             "secret": os.getenv("GOOGLE_CLIENT_SECRET", "").strip(),
-            "key": ""
-        }
+            "key": "",
+        },
+        "APPS": [
+            {
+                "client_id": os.getenv("GOOGLE_CLIENT_ID", "").strip(),
+                "secret": os.getenv("GOOGLE_CLIENT_SECRET", "").strip(),
+                "key": "",
+            }
+        ],
     }
 }
 

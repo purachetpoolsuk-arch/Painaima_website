@@ -18,9 +18,11 @@
    - **Authorized JavaScript origins**:
      - `http://127.0.0.1:8000`
      - `http://localhost:8000`
+     - `https://painaima.vercel.app`
    - **Authorized redirect URIs**:
      - `http://127.0.0.1:8000/accounts/google/login/callback/`
      - `http://localhost:8000/accounts/google/login/callback/`
+     - `https://painaima.vercel.app/accounts/google/login/callback/`
 5. คลิก **Create** จะได้รับ **Client ID** และ **Client Secret**
 
 ---
